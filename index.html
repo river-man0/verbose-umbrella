@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Caelan McLaurin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --forest:   #1a2e1e;
+      --moss:     #2d4a2a;
+      --sage:     #5a7f54;
+      --river:    #3a7ca5;
+      --river-lt: #6fb3d3;
+      --stone:    #c9c1b2;
+      --parchment:#f0ebe1;
+      --cream:    #faf7f2;
+      --ink:      #1a1a18;
+      --accent:   #c8793a;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--forest);
+      color: var(--cream);
+      overflow-x: hidden;
+    }
+
+    /* ── TOPOGRAPHIC CANVAS ── */
+    #topo-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      opacity: 0.18;
+      pointer-events: none;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.2rem 3rem;
+      background: linear-gradient(to bottom, rgba(20,38,20,0.95), transparent);
+    }
+
+    .nav-logo {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.85rem;
+      letter-spacing: 0.15em;
+      color: var(--stone);
+      text-transform: uppercase;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2.5rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--stone);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--river-lt); }
+
+    /* ── HERO ── */
+    #hero {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      padding: 0 3rem 4rem;
+    }
+
+    .hero-main {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-top: 6rem;
+    }
+
+    .hero-eyebrow {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--sage);
+      margin-bottom: 1.5rem;
+      opacity: 0;
+      animation: fadeUp 0.8s ease 0.2s forwards;
+    }
+
+    .hero-name {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(4rem, 10vw, 9rem);
+      font-weight: 900;
+      line-height: 0.92;
+      letter-spacing: -0.02em;
+      color: var(--cream);
+      opacity: 0;
+      animation: fadeUp 0.9s ease 0.35s forwards;
+    }
+
+    .hero-name em {
+      font-style: italic;
+      color: var(--river-lt);
+    }
+
+    .hero-tagline {
+      margin-top: 2rem;
+      max-width: 520px;
+      font-size: 1.05rem;
+      font-weight: 300;
+      line-height: 1.7;
+      color: var(--stone);
+      opacity: 0;
+      animation: fadeUp 0.9s ease 0.55s forwards;
+    }
+
+    .hero-cta {
+      margin-top: 3rem;
+      display: flex;
+      gap: 1.2rem;
+      flex-wrap: wrap;
+      opacity: 0;
+      animation: fadeUp 0.9s ease 0.72s forwards;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-decoration: none;
+      padding: 0.85rem 2rem;
+      border-radius: 2px;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: var(--river);
+      color: var(--cream);
+      border: 2px solid var(--river);
+    }
+    .btn-primary:hover { background: var(--river-lt); border-color: var(--river-lt); color: var(--ink); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--stone);
+      border: 2px solid var(--moss);
+    }
+    .btn-ghost:hover { border-color: var(--stone); color: var(--cream); }
+
+    .hero-coords {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      color: var(--sage);
+      opacity: 0;
+      animation: fadeUp 0.8s ease 0.9s forwards;
+    }
+
+    /* ── DIVIDER ── */
+    .section-divider {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 0 3rem;
+      margin: 0 0 1rem;
+    }
+
+    .divider-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--sage);
+      white-space: nowrap;
+    }
+
+    .divider-line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(to right, var(--moss), transparent);
+    }
+
+    /* ── SECTIONS ── */
+    section {
+      position: relative;
+      z-index: 1;
+      padding: 5rem 3rem;
+    }
+
+    /* ── ABOUT ── */
+    #about {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6rem;
+      align-items: start;
+      background: rgba(255,255,255,0.02);
+      border-top: 1px solid var(--moss);
+    }
+
+    .about-text h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.2rem, 4vw, 3.5rem);
+      font-weight: 700;
+      line-height: 1.1;
+      color: var(--cream);
+      margin-bottom: 1.5rem;
+    }
+
+    .about-text h2 em {
+      font-style: italic;
+      color: var(--river-lt);
+    }
+
+    .about-text p {
+      font-size: 1rem;
+      line-height: 1.8;
+      color: var(--stone);
+      margin-bottom: 1.2rem;
+    }
+
+    .about-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    .stat-card {
+      border: 1px solid var(--moss);
+      padding: 1.5rem;
+      border-radius: 4px;
+      background: rgba(45, 74, 42, 0.2);
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .stat-card:hover {
+      border-color: var(--river);
+      background: rgba(58, 124, 165, 0.08);
+    }
+
+    .stat-number {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.8rem;
+      font-weight: 900;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--sage);
+      margin-top: 0.4rem;
+    }
+
+    /* ── SKILLS ── */
+    #skills { border-top: 1px solid var(--moss); }
+
+    .skills-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+
+    .skill-category {
+      border: 1px solid var(--moss);
+      padding: 2rem;
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+      background: rgba(26,46,30,0.6);
+      transition: border-color 0.25s, transform 0.25s;
+    }
+
+    .skill-category::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 3px;
+      height: 100%;
+      background: var(--river);
+      transform: scaleY(0);
+      transform-origin: bottom;
+      transition: transform 0.3s ease;
+    }
+
+    .skill-category:hover { border-color: var(--river); transform: translateY(-3px); }
+    .skill-category:hover::before { transform: scaleY(1); }
+
+    .skill-icon { font-size: 1.8rem; margin-bottom: 1rem; }
+
+    .skill-category h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--cream);
+      margin-bottom: 0.8rem;
+    }
+
+    .skill-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 1rem;
+    }
+
+    .tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.3rem 0.7rem;
+      border-radius: 2px;
+      background: rgba(58,124,165,0.15);
+      border: 1px solid rgba(58,124,165,0.3);
+      color: var(--river-lt);
+    }
+
+    /* ── EXPERIENCE ── */
+    #experience { border-top: 1px solid var(--moss); }
+
+    .experience-section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 3.5vw, 3rem);
+      font-weight: 700;
+      color: var(--cream);
+      margin-bottom: 3rem;
+    }
+
+    .experience-section-title em { font-style: italic; color: var(--river-lt); }
+
+    .timeline {
+      position: relative;
+      padding-left: 2rem;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.6rem;
+      bottom: 0.6rem;
+      width: 1px;
+      background: linear-gradient(to bottom, var(--river), var(--moss), transparent);
+    }
+
+    .timeline-item {
+      position: relative;
+      padding: 0 0 3rem 2.5rem;
+      opacity: 0;
+      transform: translateX(-20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+
+    .timeline-item.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -0.35rem;
+      top: 0.55rem;
+      width: 0.7rem;
+      height: 0.7rem;
+      border-radius: 50%;
+      background: var(--river);
+      border: 2px solid var(--forest);
+      box-shadow: 0 0 0 3px rgba(58,124,165,0.25);
+    }
+
+    .timeline-date {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+
+    .timeline-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--cream);
+    }
+
+    .timeline-org {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--sage);
+      margin: 0.3rem 0 0.8rem;
+      letter-spacing: 0.05em;
+    }
+
+    .timeline-desc {
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: var(--stone);
+    }
+
+    /* ── EDUCATION ── */
+    #education {
+      border-top: 1px solid var(--moss);
+      background: rgba(45,74,42,0.08);
+    }
+
+    .edu-card {
+      border: 1px solid var(--moss);
+      padding: 2.5rem;
+      border-radius: 4px;
+      background: rgba(26,46,30,0.5);
+      max-width: 680px;
+      margin-bottom: 1.5rem;
+      transition: border-color 0.2s;
+    }
+
+    .edu-card:hover { border-color: var(--sage); }
+
+    .edu-degree {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--cream);
+      margin-bottom: 0.4rem;
+    }
+
+    .edu-school {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      color: var(--river-lt);
+      margin-bottom: 0.8rem;
+    }
+
+    .edu-desc {
+      font-size: 0.9rem;
+      color: var(--stone);
+      line-height: 1.7;
+    }
+
+    /* ── CONTACT ── */
+    #contact {
+      border-top: 1px solid var(--moss);
+      text-align: center;
+      padding: 6rem 3rem;
+    }
+
+    #contact h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.5rem, 5vw, 4.5rem);
+      font-weight: 900;
+      font-style: italic;
+      color: var(--cream);
+      margin-bottom: 1rem;
+    }
+
+    #contact p {
+      font-size: 1rem;
+      color: var(--stone);
+      margin-bottom: 2.5rem;
+    }
+
+    .contact-links {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 4rem;
+    }
+
+    .contact-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+      text-decoration: none;
+      color: var(--stone);
+      transition: color 0.2s;
+      padding: 1.2rem 2rem;
+      border: 1px solid var(--moss);
+      border-radius: 4px;
+      background: rgba(26,46,30,0.4);
+    }
+
+    .contact-item:hover { color: var(--river-lt); border-color: var(--river); }
+
+    .contact-item-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--sage);
+    }
+
+    .contact-item-value {
+      font-size: 0.9rem;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--moss);
+      padding: 1.5rem 3rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    footer span {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      color: var(--sage);
+    }
+
+    /* ── LANGUAGE BADGES ── */
+    .lang-badges {
+      display: flex;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+      margin-top: 1.5rem;
+    }
+
+    .lang-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.35rem 0.9rem;
+      border-radius: 2px;
+      border: 1px solid var(--moss);
+      color: var(--stone);
+    }
+
+    .lang-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      nav { padding: 1rem 1.5rem; }
+      .nav-links { gap: 1.2rem; }
+      section, #hero { padding-left: 1.5rem; padding-right: 1.5rem; }
+      .section-divider { padding: 0 1.5rem; }
+      footer { padding: 1.2rem 1.5rem; }
+      #about { grid-template-columns: 1fr; gap: 3rem; }
+      .about-stats { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Topographic background canvas -->
+<canvas id="topo-canvas"></canvas>
+
+<!-- NAV -->
+<nav>
+  <span class="nav-logo">Caelan McLaurin</span>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#skills">Skills</a></li>
+    <li><a href="#experience">Experience</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-main">
+    <p class="hero-eyebrow">⬡ Geographer · Ottawa, Canada</p>
+    <h1 class="hero-name">Caelan<br /><em>McLaurin</em></h1>
+    <p class="hero-tagline">
+      Wilderness Guide turned Geomatician<br />
+    </p>
+    <div class="hero-cta">
+      <a href="#experience" class="btn btn-primary">View Experience</a>
+      <a href="#contact" class="btn btn-ghost">Get in Touch</a>
+    </div>
+    <div class="lang-badges" style="margin-top:2.5rem">
+      <span class="lang-badge"><span class="lang-dot"></span>English</span>
+      <span class="lang-badge"><span class="lang-dot" style="background:var(--river-lt)"></span>Français</span>
+      <span class="lang-badge"><span class="lang-dot" style="background:var(--sage)"></span>Español</span>
+    </div>
+  </div>
+  <p class="hero-coords">45°25′N 75°41′W · Ottawa, ON · Canadian Citizen</p>
+</section>
+
+<!-- ABOUT -->
+<div class="section-divider"><span class="divider-label">01 · About</span><div class="divider-line"></div></div>
+<section id="about">
+  <div class="about-text">
+    <h2>Where <em>geography</em> meets grit.</h2>
+    <p>
+      I'm a Geography graduate from Carleton University, specializing in GIS, geomatics, hydrology,
+      and spatial analysis. My relationship with landscapes didn't start in a classroom.
+      It started on rivers, ski slopes, and wilderness canoe routes across Canada.
+    </p>
+    <p>
+      Ten-plus years guiding, instructing, and leading people through challenging terrain
+      gave me something no map can teach: the judgment to read a situation and act decisively.
+      I bring that same clarity to technical work.
+    </p>
+    <p>
+      I'm fluent in ArcGIS, Python, and the outdoors.
+    </p>
+  </div>
+  <div class="about-stats">
+    <div class="stat-card">
+      <div class="stat-number">10+</div>
+      <div class="stat-label">Years Outdoors</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">5</div>
+      <div class="stat-label">Rivers Guided</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">3</div>
+      <div class="stat-label">Languages</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">2+</div>
+      <div class="stat-label">Years in Federal GIS Operations</div>
+    </div>
+  </div>
+</section>
+
+<!-- SKILLS -->
+<div class="section-divider"><span class="divider-label">02 · Skills</span><div class="divider-line"></div></div>
+<section id="skills">
+  <div class="skills-grid">
+    <div class="skill-category">
+      <div class="skill-icon">🗺️</div>
+      <h3>Geospatial &amp; GIS</h3>
+      <p style="font-size:0.88rem;color:var(--stone);line-height:1.7;">Spatial analysis, cartographic design, and geomatics with industry-standard tooling.</p>
+      <div class="skill-tags">
+        <span class="tag">Spatial Analysis</span>
+        <span class="tag">Raster &amp; Vector</span>
+        <span class="tag">Hydrology</span>
+        <span class="tag">Climatology</span>
+        <span class="tag">Cartography</span>
+        <span class="tag">Geocoding</span>
+        <span class="tag">Remote Sensing</span>
+        <span class="tag">OSM Contributor</span>
+      </div>
+    </div>
+    <div class="skill-category">
+      <div class="skill-icon">💻</div>
+      <h3>Technical</h3>
+      <p style="font-size:0.88rem;color:var(--stone);line-height:1.7;">Programming, data analysis, and software tools applied to geospatial and operational problems.</p>
+      <div class="skill-tags">
+        <span class="tag">Python</span>
+        <span class="tag">GeoPandas</span>
+        <span class="tag">ArcGIS</span>
+        <span class="tag">QGIS</span>
+        <span class="tag">HTML</span>
+        <span class="tag">Microsoft</span>
+        <span class="tag">Git</span>
+        <span class="tag">Automation</span>
+        <span class="tag">IoT</span>
+        <span class="tag">Prompt Engineering</span>
+      </div>
+    </div>
+    <div class="skill-category">
+      <div class="skill-icon">⛰️</div>
+      <h3>Wilderness &amp; Field</h3>
+      <p style="font-size:0.88rem;color:var(--stone);line-height:1.7;">Certified and experienced in high-stakes outdoor environments — river, alpine, and urban.</p>
+      <div class="skill-tags">
+        <span class="tag">Swiftwater Rescue</span>
+        <span class="tag">WFR</span>
+        <span class="tag">Avalanche AST-1</span>
+        <span class="tag">Rope Rescue</span>
+        <span class="tag">First Aid &amp; CPR-C</span>
+      </div>
+    </div>
+    <div class="skill-category">
+      <div class="skill-icon">🧭</div>
+      <h3>Leadership &amp; Operations</h3>
+      <p style="font-size:0.88rem;color:var(--stone);line-height:1.7;">Team management, collaboration, and logistical execution in dynamic environments.</p>
+      <div class="skill-tags">
+        <span class="tag">Leadership</span>
+        <span class="tag">Initiative</span>
+        <span class="tag">Logistics</span>
+        <span class="tag">Communication</span>
+        <span class="tag">Integrity</span>
+        <span class="tag">Respect</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EXPERIENCE -->
+<div class="section-divider"><span class="divider-label">03 · Experience</span><div class="divider-line"></div></div>
+<section id="experience">
+  <h2 class="experience-section-title">A career built <em>outside.</em></h2>
+
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-date">Sep 2024 — Present</div>
+      <div class="timeline-title">Production Officer (EC-02) - Geomatics Analytics and Client Services</div>
+      <div class="timeline-org">Statistics Canada · Ottawa, ON</div>
+      <p class="timeline-desc">Manage GeoHelp desk and provide bilingual support to internal clients across Canada on geospatial
+                              topics and products. Administer ESRI licenses, monitor ArcGIS Online organization, troubleshoot GIS
+                              issues. Produce custom geospatial solutions and products, including cartography, Python geoprocessing
+                              tools, spatial analysis, spatial data production and quality assurance. Coordinate cross-departmental
+                              meetings, outreach events, and spatial product education and training.
+                              Built and implemented an automated software license monitoring system that saves time and
+                              money, while quantitively assessing business needs to inform software license purchasing.
+                              Researched and proposed a method to convert ORNL’s raster data to vector format, allowing the
+                              client to create a spatially accurate distribution of at-risk populations for hate crimes in Toronto.</p>
+    </div>
+
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-date">May 2024 — Sep 2024</div>
+      <div class="timeline-title">GIS Operator</div>
+      <div class="timeline-org">Statistics Canada · Ottawa, ON</div>
+      <p class="timeline-desc">Maintained and updated the Statistical Building Registry (SBgR) using ArcGIS Pro. Executed quality
+                              assurance processes to deliver an excellent product to the client. Trained new staff in GIS tools and
+                              workflows. Organized and encouraged staff social meetings. Developed and distributed automation
+                              scripts using Python and ArcPy. Delivered consistent production while meeting quality control standards.
+                              Developed a script tool to automate portions of the GIS workflow that saved 8 minutes on each
+                              assignment and QA process, which resulted in increased training efficiency and production
+                              rates.
+                              Appreciation Award for Noteworthy Service to the Agency</p>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-date">May 2021 — Sep 2023</div>
+      <div class="timeline-title">Landscape Technician Lead Hand</div>
+      <div class="timeline-org">Gemma Property Services Inc. · Ottawa, ON</div>
+      <p class="timeline-desc">Crew leader for high-profile properties across the National Capital Region including NCC and Government of Canada sites. Managed turf, garden, tree care, hardscape, and snow removal operations. Safety representative for the Joint Health &amp; Safety Committee.</p>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-date">Nov 2019 — Mar 2020</div>
+      <div class="timeline-title">Volunteer Ski Patrol &amp; Retail Keyholder</div>
+      <div class="timeline-org">Revelstoke Mountain Resort · Revelstoke, BC</div>
+      <p class="timeline-desc">Dual role: assisted professional ski patrollers with hazard assessment and patient transport, while managing retail operations including opening/closing, cash handling (USD &amp; CAD), and merchandising.</p>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-date">Summers 2018 – 2020</div>
+      <div class="timeline-title">River Guide</div>
+      <div class="timeline-org">OWL Rafting Inc. · Forester's Falls, ON</div>
+      <p class="timeline-desc">Oar-guided 12-passenger rafts and paddle-guided 7-passenger rafts on the Ottawa River's Rochers Fondues section. Responsible for group management, emergency procedures, and first aid in challenging whitewater environments.</p>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-date">Summers 2018 – 2019</div>
+      <div class="timeline-title">Canoe Instructor</div>
+      <div class="timeline-org">Madawaska Kanu Centre Inc. · Barry's Bay, ON</div>
+      <p class="timeline-desc">Delivered Paddle Canada curriculum (Intro through Advanced) on the Middle Madawaska River. Responsible for trip planning, emergency procedures, and exceptional guest rapport.</p>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-date">Summers 2014 – 2017</div>
+      <div class="timeline-title">Wilderness Canoe Guide</div>
+      <div class="timeline-org">Camp YMCA Kanawana · St. Sauveur, QC</div>
+      <p class="timeline-desc">Co-guided multi-day canoe expeditions on the Rouge, Coulonge, Dumoine, Noire, and Missinaibi Rivers with youth aged 8–16.</p>
+    </div>
+  </div>
+</section>
+
+<!-- EDUCATION -->
+<div class="section-divider"><span class="divider-label">04 · Education</span><div class="divider-line"></div></div>
+<section id="education">
+  <div class="edu-card">
+    <div class="edu-degree">B.A. in Geography</div>
+    <div class="edu-school">Carleton University · Ottawa, ON · Graduated December 2024</div>
+    <p class="edu-desc">Specializing in hydrology, climatology, cultural geography, GIS, geomatics, and spatial analysis. Four-year program combining rigorous technical training with broad geographical understanding. Recipient of Claude Bissel Scholarship and Dean's List Award.</p>
+  </div>
+  <div class="edu-card">
+    <div class="edu-degree">O.S.S.D. · Extended French Certificate</div>
+    <div class="edu-school">Lisgar Collegiate Institute · Ottawa, ON · 2010 – 2014</div>
+    <p class="edu-desc">Ontario Secondary School Diploma with Extended French designation, reflecting early and sustained bilingual education.</p>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<div class="section-divider"><span class="divider-label">05 · Contact</span><div class="divider-line"></div></div>
+<section id="contact">
+  <h2>Let's work <em>together.</em></h2>
+  <p>Open to GIS, geomatics, and outdoor positions. Based in Ottawa — happy to discuss.</p>
+  <div class="contact-links">
+    <a href="mailto:caelan.mclaurin@gmail.com" class="contact-item">
+      <span class="contact-item-label">Email</span>
+      <span class="contact-item-value">me@caelanm.ca</span>
+    </a>
+    <a href="tel:+16132621964" class="contact-item">
+      <span class="contact-item-label">Phone</span>
+      <span class="contact-item-value">Null</span>
+    </a>
+    <div class="contact-item">
+      <span class="contact-item-label">Location</span>
+      <span class="contact-item-value">Ottawa, ON · Canada</span>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span>© 2025 Caelan McLaurin</span>
+  <span>caelanm.ca · Ottawa, Canada</span>
+</footer>
+
+<script>
+  // ── Topographic contour lines ──
+  const canvas = document.getElementById('topo-canvas');
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = document.body.scrollHeight;
+    draw();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const W = canvas.width, H = canvas.height;
+
+    // Generate smooth noise
+    function noise(x, y, seed) {
+      const n = Math.sin(x * 0.008 + seed) * Math.cos(y * 0.005 + seed * 1.3)
+              + Math.sin(x * 0.015 + seed * 2) * Math.cos(y * 0.012 + seed)
+              + Math.sin((x + y) * 0.006 + seed * 0.7) * 0.5;
+      return n;
+    }
+
+    const levels = 18;
+    for (let i = 0; i < levels; i++) {
+      const t = i / levels;
+      const threshold = -1.2 + i * (2.4 / levels);
+
+      ctx.beginPath();
+      ctx.strokeStyle = `rgba(100, 160, 100, ${0.3 + t * 0.2})`;
+      ctx.lineWidth = i % 5 === 0 ? 1.2 : 0.5;
+
+      let drawing = false;
+      for (let x = 0; x <= W; x += 4) {
+        for (let y = 0; y <= H; y += 80) {
+          const v1 = noise(x, y, 3.7);
+          const v2 = noise(x, y + 80, 3.7);
+          if ((v1 - threshold) * (v2 - threshold) < 0) {
+            const interp_y = y + 80 * (threshold - v1) / (v2 - v1);
+            if (!drawing) { ctx.moveTo(x, interp_y); drawing = true; }
+            else ctx.lineTo(x, interp_y);
+          }
+        }
+        drawing = false;
+      }
+      ctx.stroke();
+    }
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+
+  // ── Timeline scroll reveal ──
+  const items = document.querySelectorAll('.timeline-item');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 80);
+      }
+    });
+  }, { threshold: 0.15 });
+  items.forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
